@@ -35,6 +35,8 @@ namespace NLog.Wcf.Tests
 {
     using System;
     using System.Collections.Generic;
+    using System.ServiceModel;
+    using System.ServiceModel.Channels;
     using System.Threading;
     using NLog.Common;
     using NLog.LogReceiverService;
@@ -47,6 +49,40 @@ namespace NLog.Wcf.Tests
         public LogReceiverWebServiceTargetTests()
         {
             LogManager.ThrowExceptions = true;
+        }
+
+        [Theory]
+        [InlineData("http://notimportant:9999/", BasicHttpSecurityMode.TransportCredentialOnly)]
+        [InlineData("https://notimportant:9999/", BasicHttpSecurityMode.Transport)]
+        public void CreateLogReceiverWithExpectedBasicHttpBindingSecurityMode(string endpoint, BasicHttpSecurityMode expectedMode)
+        {
+            var target = new TestLogReceiverWebServiceTarget
+            {
+                UseBinaryEncoding = false
+            };
+
+            var client = target.CreateClient(endpoint);
+            var binding = Assert.IsType<BasicHttpBinding>(client.Endpoint.Binding);
+
+            Assert.Equal(HttpClientCredentialType.Windows, binding.Security.Transport.ClientCredentialType);
+            Assert.Equal(expectedMode, binding.Security.Mode);
+        }
+
+        [Theory]
+        [InlineData("http://notimportant:9999/", typeof(HttpTransportBindingElement))]
+        [InlineData("https://notimportant:9999/", typeof(HttpsTransportBindingElement))]
+        public void CreateLogReceiverWithExpectedCustomBindingTransportElement(string endpoint, Type expectedTransport)
+        {
+            var target = new TestLogReceiverWebServiceTarget
+            {
+                UseBinaryEncoding = true
+            };
+
+            var client = target.CreateClient(endpoint);
+            var binding = Assert.IsType<CustomBinding>(client.Endpoint.Binding);
+
+            Assert.IsType<BinaryMessageEncodingBindingElement>(binding.Elements[0]);
+            Assert.IsType(expectedTransport, binding.Elements[binding.Elements.Count - 1]);
         }
 
         [Theory]
@@ -67,7 +103,6 @@ namespace NLog.Wcf.Tests
                 BaseTimeUtc = DateTime.UtcNow.Ticks,
                 ClientName = "client1",
                 Events = new NLogEvent[0]
-
             };
             var dict2 = new Dictionary<string, int>();
 
@@ -245,6 +280,14 @@ namespace NLog.Wcf.Tests
             finally
             {
                 logger.Factory.Shutdown();
+            }
+        }
+
+        private sealed class TestLogReceiverWebServiceTarget : LogReceiverWebServiceTarget
+        {
+            public WcfLogReceiverClient CreateClient(string endpoint)
+            {
+                return (WcfLogReceiverClient)CreateLogReceiver(endpoint);
             }
         }
 
