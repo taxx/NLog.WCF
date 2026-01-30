@@ -23,9 +23,7 @@
     <PackageReleaseNotes>
 ChangeLog:
 
-- Updated to NLog v6.0.2
-- Removed direct dependency on System.ServiceModel.Primitives
-- Removed direct dependency on System.Net.Http.WinHttpHandler
+- Addded support for https endpoints
 
 Docs:
 https://github.com/NLog/NLog/wiki/LogReceiverService-target
