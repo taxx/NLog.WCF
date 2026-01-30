@@ -316,7 +316,7 @@ namespace NLog.Targets
                 }
                 else
                 {
-                    binding = new BasicHttpBinding();
+                    binding = CreatetBasicHttpBindingForUrl(endPointAddress);
                 }
 
                 client = new WcfLogReceiverClient(UseOneWayContract, binding, new EndpointAddress(endPointAddress));
@@ -329,6 +329,23 @@ namespace NLog.Targets
             client.ProcessLogMessagesCompleted += ClientOnProcessLogMessagesCompleted;
 
             return client;
+        }
+
+        private static BasicHttpBinding CreatetBasicHttpBindingForUrl(string url)
+        {
+            var binding = new BasicHttpBinding();
+
+            binding.Security.Transport.ClientCredentialType = HttpClientCredentialType.Windows;
+            binding.Security.Mode = IsSslEndpoint(url)
+                ? BasicHttpSecurityMode.Transport
+                : BasicHttpSecurityMode.TransportCredentialOnly;
+
+            return binding;
+        }
+
+        private static bool IsSslEndpoint(string url)
+        {
+            return url.StartsWith("https", StringComparison.InvariantCultureIgnoreCase);
         }
 
         private void ClientOnProcessLogMessagesCompleted(object sender, AsyncCompletedEventArgs asyncCompletedEventArgs)
