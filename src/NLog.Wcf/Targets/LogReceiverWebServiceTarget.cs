@@ -317,7 +317,7 @@ namespace NLog.Targets
                 }
                 else
                 {
-                    binding = CreateBasicHttpBindingForUrl(isSslEndpoint);
+                    binding = CreateBasicHttpBinding(isSslEndpoint);
                 }
 
                 client = new WcfLogReceiverClient(UseOneWayContract, binding, new EndpointAddress(endPointAddress));
@@ -332,7 +332,7 @@ namespace NLog.Targets
             return client;
         }
 
-        private static BasicHttpBinding CreateBasicHttpBindingForUrl(bool isSslEndpoint)
+        private static BasicHttpBinding CreateBasicHttpBinding(bool isSslEndpoint)
         {
             var binding = new BasicHttpBinding();
 
