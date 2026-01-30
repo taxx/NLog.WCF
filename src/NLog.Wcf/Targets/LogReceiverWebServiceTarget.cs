@@ -304,6 +304,7 @@ namespace NLog.Targets
         protected virtual IWcfLogReceiverClient CreateLogReceiver(string endPointAddress)
         {
             WcfLogReceiverClient client;
+            var isSslEndpoint = IsSslEndpoint(endPointAddress);
 
             if (string.IsNullOrEmpty(EndpointConfigurationName))
             {
@@ -312,11 +313,11 @@ namespace NLog.Targets
 
                 if (UseBinaryEncoding)
                 {
-                    binding = new CustomBinding(new BinaryMessageEncodingBindingElement(), new HttpTransportBindingElement());
+                    binding = new CustomBinding(new BinaryMessageEncodingBindingElement(), isSslEndpoint ? new HttpsTransportBindingElement() : new HttpTransportBindingElement());
                 }
                 else
                 {
-                    binding = CreatetBasicHttpBindingForUrl(endPointAddress);
+                    binding = CreateBasicHttpBindingForUrl(isSslEndpoint);
                 }
 
                 client = new WcfLogReceiverClient(UseOneWayContract, binding, new EndpointAddress(endPointAddress));
@@ -331,12 +332,12 @@ namespace NLog.Targets
             return client;
         }
 
-        private static BasicHttpBinding CreatetBasicHttpBindingForUrl(string url)
+        private static BasicHttpBinding CreateBasicHttpBindingForUrl(bool isSslEndpoint)
         {
             var binding = new BasicHttpBinding();
 
             binding.Security.Transport.ClientCredentialType = HttpClientCredentialType.Windows;
-            binding.Security.Mode = IsSslEndpoint(url)
+            binding.Security.Mode = isSslEndpoint
                 ? BasicHttpSecurityMode.Transport
                 : BasicHttpSecurityMode.TransportCredentialOnly;
 
